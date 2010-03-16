@@ -10,16 +10,16 @@ module Asbestos
         ";xml.target!.to_json;"
     end
   end
-  
+
   module ControllerMethods
     private
     def render_json_from_xml(options)
-      template = @template.view_paths.find_template("#{controller_name}/#{action_name}", :xml)
+      template = @template.view_paths.find_template("#{controller_path}/#{action_name}", :xml)
       compiled_name = (template.method_name_without_locals + '_asbestos').to_sym
-      
+
       if !ActionView::Base::CompiledTemplates.method_defined?(compiled_name)
         compiled_source = ::Asbestos::TemplateHandler.new.compile(template, options)
-        
+
         ActionView::Base::CompiledTemplates.module_eval(<<-SRC, template.filename, 0)
           def #{compiled_name}
             old_output_buffer = output_buffer;#{compiled_source}
@@ -28,9 +28,9 @@ module Asbestos
           end
         SRC
       end
-      
+
       render :text => @template.with_template(template) {
-        @template.send(:_evaluate_assigns_and_ivars)        
+        @template.send(:_evaluate_assigns_and_ivars)
         result = @template.send(compiled_name)
         # support JSON-P
         if callback = options[:callback]
@@ -41,34 +41,34 @@ module Asbestos
       }
     end
   end
-  
+
   class Builder < BlankSlate
     def initialize(options = {})
       @target = _new_hash
       @options = options
     end
-    
+
     def target!
       @target
     end
-    
+
     def instruct!(*args)
     end
-    
+
     def tag!(sym, *args, &block)
       method_missing(sym.to_sym, *args, &block)
     end
-    
+
     protected
-    
+
     def method_missing(method, *args)
       method = method.to_s
-      
+
       if method.ends_with?('!')
         super
       else
         value, attrs = _extract_value_and_attributes(args)
-        
+
         if block_given?
           raise ArgumentError, "can't have mix values with a block" if value
           old_target = @target
@@ -90,34 +90,34 @@ module Asbestos
         end
       end
     end
-    
+
     private
-    
+
     def _ignores
       @options[:ignore] ||= []
     end
-    
+
     def _aggregates
       @options[:aggregate] ||= []
     end
-    
+
     def _write_pair(key, value, aggregate = false)
       key = key.to_s.gsub('-', '_')
       aggregate ? (@target[key.pluralize] ||= []) << value : @target[key] = value
     end
-    
+
     def _new_hash
       ActiveSupport::OrderedHash.new
     end
-    
+
     def _extract_value_and_attributes(args)
       if args.first.kind_of?(Symbol)
         raise ArgumentError, "don't know how to do XML namespaces in JSON"
       end
-      
+
       value = nil
       attrs = nil
-      
+
       args.each do |arg|
         case arg
         when Hash
@@ -131,8 +131,9 @@ module Asbestos
           end
         end
       end
-      
+
       [value, attrs]
     end
   end
 end
+
