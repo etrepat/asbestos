@@ -5,7 +5,7 @@ module Asbestos
     def compile(template, options = {})
       "_set_controller_content_type(Mime::JSON);" +
         "xml = ::Asbestos::Builder.new(#{options.inspect});" +
-        # "self.output_buffer = xml.target!;" +
+        "self.output_buffer = xml.target!.to_json;" +
         template.source +
         ";xml.target!.to_json;"
     end
